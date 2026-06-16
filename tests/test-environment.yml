@@ -1,0 +1,37 @@
+name: Test environment creation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          environment-file: actions/hardened/mamba-org--setup-micromamba/v3.0.0/tests/fixtures/environment.yml
+          environment-name: my-test-env
+          create-args: >-
+            pip
+          micromamba-version: 'latest'
+          post-cleanup: 'none'
+      - name: Assert environment-path output is set
+        env:
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
+        run: |
+          echo "environment-path: $ENV_PATH"
+          if [ -z "$ENV_PATH" ]; then
+            echo "FAIL: environment-path output is empty"
+            exit 1
+          fi
+          echo "PASS: environment-path is set to $ENV_PATH"
+      - name: Assert environment exists
+        env:
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
+        run: |
+          echo "Checking environment at: $ENV_PATH"
+          if [ ! -d "$ENV_PATH" ]; then
+            echo "FAIL: environment directory does not exist at $ENV_PATH"
+            exit 1
+          fi
+          echo "PASS: environment directory exists"

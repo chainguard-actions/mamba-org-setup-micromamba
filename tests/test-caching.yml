@@ -1,0 +1,26 @@
+name: Test caching options
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          micromamba-version: 'latest'
+          cache-downloads: 'false'
+          cache-downloads-key: 'test-downloads-key'
+          cache-environment: 'false'
+          cache-environment-key: 'test-environment-key'
+          init-shell: 'none'
+          post-cleanup: 'all'
+      - name: Assert micromamba is available
+        run: |
+          if ! command -v micromamba &> /dev/null; then
+            echo "FAIL: micromamba not found on PATH"
+            exit 1
+          fi
+          echo "PASS: micromamba is available"
+          micromamba --version
