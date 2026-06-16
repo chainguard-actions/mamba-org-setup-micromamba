@@ -1,0 +1,32 @@
+name: Test micromamba cache and url options
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          micromamba-version: 'latest'
+          micromamba-root-path: /tmp/micromamba-root
+          micromamba-binary-path: /tmp/micromamba-bin/micromamba
+          cache-downloads: 'false'
+          cache-downloads-key: test-downloads-key
+          cache-environment: 'false'
+          cache-environment-key: test-environment-key
+          init-shell: none
+          log-level: info
+          post-cleanup: all
+      - name: Assert micromamba binary exists
+        run: |
+          if [ ! -f "/tmp/micromamba-bin/micromamba" ]; then
+            echo "FAIL: micromamba binary not found"
+            exit 1
+          fi
+          echo "PASS: micromamba binary found"
+      - name: Assert micromamba version runs
+        run: |
+          /tmp/micromamba-bin/micromamba --version
+          echo "PASS: micromamba --version succeeded"

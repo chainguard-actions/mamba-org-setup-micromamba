@@ -1,0 +1,32 @@
+name: Test micromamba download options
+on:
+  workflow_dispatch:
+jobs:
+  test-with-url:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          micromamba-url: 'https://github.com/mamba-org/micromamba-releases/releases/latest/download/micromamba-linux-64'
+          micromamba-root-path: /tmp/micromamba-root
+          micromamba-binary-path: /tmp/micromamba-bin/micromamba
+          download-micromamba: 'true'
+          init-shell: none
+          log-level: info
+          post-cleanup: all
+      - name: Assert micromamba binary exists
+        run: |
+          if [ ! -f "/tmp/micromamba-bin/micromamba" ]; then
+            echo "FAIL: micromamba binary not found"
+            exit 1
+          fi
+          echo "PASS: micromamba binary found"
+      - name: Assert micromamba is executable
+        run: |
+          if [ ! -x "/tmp/micromamba-bin/micromamba" ]; then
+            echo "FAIL: micromamba binary is not executable"
+            exit 1
+          fi
+          echo "PASS: micromamba binary is executable"
