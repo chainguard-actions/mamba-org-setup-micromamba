@@ -1,0 +1,58 @@
+name: Test create named environment
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          environment-name: test-env
+          create-args: python=3.11
+          init-shell: none
+          generate-run-shell: "false"
+          post-cleanup: none
+      - name: Assert environment-path output is set
+        env:
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
+        run: |
+          echo "environment-path: '$ENV_PATH'"
+          if [ -z "$ENV_PATH" ]; then
+            echo "FAIL: expected environment-path to be set but it is empty"
+            exit 1
+          fi
+          echo "PASS: environment-path=$ENV_PATH"
+      - name: Assert environment directory exists
+        env:
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
+        run: |
+          echo "Checking environment directory: $ENV_PATH"
+          if [ ! -d "$ENV_PATH" ]; then
+            echo "FAIL: environment directory does not exist: $ENV_PATH"
+            exit 1
+          fi
+          echo "PASS: environment directory exists"
+      - name: Assert python is installed in the environment
+        env:
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
+        run: |
+          PYTHON_BIN="$ENV_PATH/bin/python"
+          echo "Checking for python at: $PYTHON_BIN"
+          if [ ! -f "$PYTHON_BIN" ] && [ ! -L "$PYTHON_BIN" ]; then
+            echo "FAIL: python not found in environment at $PYTHON_BIN"
+            exit 1
+          fi
+          PYTHON_VERSION=$("$PYTHON_BIN" --version 2>&1 || true)
+          echo "Python version: $PYTHON_VERSION"
+          echo "PASS: python found in environment"
+      - name: Assert environment is listed by micromamba
+        run: |
+          ENVS=$(micromamba env list 2>&1 || true)
+          echo "Environments: $ENVS"
+          if ! echo "$ENVS" | grep -q "test-env"; then
+            echo "FAIL: test-env not found in micromamba env list"
+            exit 1
+          fi
+          echo "PASS: test-env found in micromamba env list"

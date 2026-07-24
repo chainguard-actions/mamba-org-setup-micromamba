@@ -1,0 +1,56 @@
+name: Test basic micromamba installation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          init-shell: none
+          post-cleanup: none
+      - name: Assert micromamba is on PATH
+        run: |
+          echo "which micromamba: $(which micromamba)"
+          if ! command -v micromamba &>/dev/null; then
+            echo "FAIL: micromamba not found on PATH"
+            exit 1
+          fi
+          echo "PASS: micromamba found on PATH"
+      - name: Assert micromamba runs
+        run: |
+          VERSION=$(micromamba --version 2>&1 || true)
+          echo "micromamba version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: micromamba --version returned empty output"
+            exit 1
+          fi
+          echo "PASS: micromamba version output: $VERSION"
+      - name: Assert MAMBA_ROOT_PREFIX is set
+        run: |
+          echo "MAMBA_ROOT_PREFIX: $MAMBA_ROOT_PREFIX"
+          if [ -z "$MAMBA_ROOT_PREFIX" ]; then
+            echo "FAIL: MAMBA_ROOT_PREFIX is not set"
+            exit 1
+          fi
+          echo "PASS: MAMBA_ROOT_PREFIX=$MAMBA_ROOT_PREFIX"
+      - name: Assert MAMBA_EXE is set
+        run: |
+          echo "MAMBA_EXE: $MAMBA_EXE"
+          if [ -z "$MAMBA_EXE" ]; then
+            echo "FAIL: MAMBA_EXE is not set"
+            exit 1
+          fi
+          echo "PASS: MAMBA_EXE=$MAMBA_EXE"
+      - name: Assert environment-path output is empty (no env created)
+        env:
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
+        run: |
+          echo "environment-path: '$ENV_PATH'"
+          if [ -n "$ENV_PATH" ]; then
+            echo "FAIL: expected empty environment-path but got: $ENV_PATH"
+            exit 1
+          fi
+          echo "PASS: environment-path is empty as expected"

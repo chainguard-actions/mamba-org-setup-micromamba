@@ -1,0 +1,101 @@
+name: Test post cleanup
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  merge_group:
+
+permissions: {}
+
+jobs:
+  test-post-cleanup:
+    name: ${{ matrix.post-cleanup }}
+    strategy:
+      matrix:
+        include:
+          - post-cleanup: 'none'
+            mamba-init-block-exists: 'true'
+            mamba-activate-exists: 'true'
+            env-exists: 'true'
+            root-exists: 'true'
+            binary-exists: 'true'
+          - post-cleanup: 'shell-init'
+            mamba-init-block-exists: 'false'
+            mamba-activate-exists: 'false'
+            env-exists: 'true'
+            root-exists: 'true'
+            binary-exists: 'true'
+          - post-cleanup: 'environment'
+            mamba-init-block-exists: 'false'
+            mamba-activate-exists: 'false'
+            env-exists: 'false'
+            root-exists: 'true'
+            binary-exists: 'true'
+          - post-cleanup: 'all'
+            mamba-init-block-exists: 'false'
+            mamba-activate-exists: 'false'
+            env-exists: 'false'
+            root-exists: 'false'
+            binary-exists: 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      # This is a fork of webiny/action-post-run. If webiny/action-post-run is updated, this should be updated as well.
+      - uses: lisanna-dettwyler/action-post-run@d053b9b43d788b87a409f6cdb3b6fc87c6c8a4fe
+        env:
+          MAMBA_INIT_BLOCK_EXISTS: ${{ matrix.mamba-init-block-exists }}
+          MAMBA_ACTIVATE_EXISTS: ${{ matrix.mamba-activate-exists }}
+          ENV_EXISTS: ${{ matrix.env-exists }}
+          ROOT_EXISTS: ${{ matrix.root-exists }}
+          BINARY_EXISTS: ${{ matrix.binary-exists }}
+          RUNNER_TEMP: ${{ runner.temp }}
+        with:
+          run: |
+            set -euxo pipefail
+            if [ "$MAMBA_INIT_BLOCK_EXISTS" = "true" ]; then
+              grep -F "mamba initialize" ~/.bash_profile
+              grep -F "mamba initialize" ~/.bashrc
+            else
+              ! grep -F "mamba initialize" ~/.bash_profile
+              ! grep -F "mamba initialize" ~/.bashrc
+            fi
+            if [ "$MAMBA_ACTIVATE_EXISTS" = "true" ]; then
+              grep -F "mamba activate" ~/.bash_profile
+            else
+              ! grep -F "mamba activate" ~/.bash_profile
+            fi
+            if [ "$ENV_EXISTS" = "true" ]; then
+              test -d ~/micromamba/envs/env-name
+            else
+              ! test -d ~/micromamba/envs/env-name
+            fi
+            if [ "$ROOT_EXISTS" = "true" ]; then
+              test -d ~/micromamba
+            else
+              ! test -d ~/micromamba
+            fi
+            if [ "$BINARY_EXISTS" = "true" ]; then
+              test -f ~/micromamba-bin/micromamba
+              test -f "$RUNNER_TEMP/setup-micromamba/.condarc"
+            else
+              ! test -f ~/micromamba-bin/micromamba
+              ! test -f "$RUNNER_TEMP/setup-micromamba/.condarc"
+            fi
+      - uses: ./
+        with:
+          environment-file: 'test/environment.yml'
+          init-shell: bash
+          post-cleanup: ${{ matrix.post-cleanup }}
+      - env:
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: |
+          set -euxo pipefail
+          grep -F "mamba initialize" ~/.bash_profile
+          grep -F "mamba initialize" ~/.bashrc
+          grep -F "mamba activate" ~/.bash_profile
+          test -d ~/micromamba/envs/env-name
+          test -d ~/micromamba
+          test -f ~/micromamba-bin/micromamba
+          test -f "$RUNNER_TEMP/setup-micromamba/.condarc"

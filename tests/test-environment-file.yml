@@ -1,0 +1,67 @@
+name: Test environment creation from file
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create environment file
+        run: |
+          cat > /tmp/test-environment.yml << 'EOF'
+          name: file-env
+          channels:
+            - conda-forge
+          dependencies:
+            - python=3.11
+          EOF
+          echo "Created environment file:"
+          cat /tmp/test-environment.yml
+      - id: action
+        uses: .
+        with:
+          environment-file: /tmp/test-environment.yml
+          init-shell: none
+          generate-run-shell: "false"
+          post-cleanup: none
+      - name: Assert environment-path output is set
+        env:
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
+        run: |
+          echo "environment-path: '$ENV_PATH'"
+          if [ -z "$ENV_PATH" ]; then
+            echo "FAIL: expected environment-path to be set but it is empty"
+            exit 1
+          fi
+          echo "PASS: environment-path=$ENV_PATH"
+      - name: Assert environment directory exists
+        env:
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
+        run: |
+          echo "Checking environment directory: $ENV_PATH"
+          if [ ! -d "$ENV_PATH" ]; then
+            echo "FAIL: environment directory does not exist: $ENV_PATH"
+            exit 1
+          fi
+          echo "PASS: environment directory exists"
+      - name: Assert environment is named correctly
+        env:
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
+        run: |
+          echo "environment-path: $ENV_PATH"
+          if ! echo "$ENV_PATH" | grep -q "file-env"; then
+            echo "FAIL: environment path does not contain 'file-env': $ENV_PATH"
+            exit 1
+          fi
+          echo "PASS: environment path contains 'file-env'"
+      - name: Assert python is installed in the environment
+        env:
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
+        run: |
+          PYTHON_BIN="$ENV_PATH/bin/python"
+          echo "Checking for python at: $PYTHON_BIN"
+          if [ ! -f "$PYTHON_BIN" ] && [ ! -L "$PYTHON_BIN" ]; then
+            echo "FAIL: python not found in environment at $PYTHON_BIN"
+            exit 1
+          fi
+          echo "PASS: python found in environment"

@@ -1,0 +1,37 @@
+name: Test custom log level
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          log-level: info
+          init-shell: none
+          post-cleanup: none
+      - name: Assert micromamba is installed and functional
+        run: |
+          if ! command -v micromamba &>/dev/null; then
+            echo "FAIL: micromamba not found on PATH"
+            exit 1
+          fi
+          VERSION=$(micromamba --version 2>&1 || true)
+          echo "micromamba version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: micromamba --version returned empty output"
+            exit 1
+          fi
+          echo "PASS: micromamba is functional with log-level=info"
+      - name: Assert environment variables are set
+        run: |
+          echo "MAMBA_ROOT_PREFIX: $MAMBA_ROOT_PREFIX"
+          echo "MAMBA_EXE: $MAMBA_EXE"
+          echo "CONDARC: $CONDARC"
+          if [ -z "$MAMBA_ROOT_PREFIX" ] || [ -z "$MAMBA_EXE" ] || [ -z "$CONDARC" ]; then
+            echo "FAIL: one or more required environment variables are not set"
+            exit 1
+          fi
+          echo "PASS: all required environment variables are set"

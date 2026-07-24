@@ -1,0 +1,31 @@
+name: Test specific micromamba version installation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          micromamba-version: "1.5.10-0"
+          init-shell: none
+          post-cleanup: none
+      - name: Assert micromamba is installed
+        run: |
+          if ! command -v micromamba &>/dev/null; then
+            echo "FAIL: micromamba not found on PATH"
+            exit 1
+          fi
+          echo "PASS: micromamba found on PATH"
+      - name: Assert micromamba version matches requested version
+        run: |
+          VERSION=$(micromamba --version 2>&1 | tr -d '[:space:]')
+          echo "Installed micromamba version: $VERSION"
+          # Version output is just the version number like "1.5.10"
+          if ! echo "$VERSION" | grep -q "1.5.10"; then
+            echo "FAIL: expected version 1.5.10 but got: $VERSION"
+            exit 1
+          fi
+          echo "PASS: micromamba version is 1.5.10"

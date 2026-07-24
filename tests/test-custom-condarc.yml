@@ -1,0 +1,52 @@
+name: Test custom condarc configuration
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          condarc: |
+            channels:
+              - conda-forge
+              - defaults
+            channel_priority: strict
+          init-shell: none
+          post-cleanup: none
+      - name: Assert CONDARC env var is set
+        run: |
+          echo "CONDARC: $CONDARC"
+          if [ -z "$CONDARC" ]; then
+            echo "FAIL: CONDARC environment variable is not set"
+            exit 1
+          fi
+          echo "PASS: CONDARC=$CONDARC"
+      - name: Assert condarc file exists and has correct content
+        run: |
+          echo "CONDARC file path: $CONDARC"
+          if [ ! -f "$CONDARC" ]; then
+            echo "FAIL: condarc file does not exist at $CONDARC"
+            exit 1
+          fi
+          CONTENT=$(cat "$CONDARC")
+          echo "condarc content:"
+          echo "$CONTENT"
+          if ! echo "$CONTENT" | grep -q "conda-forge"; then
+            echo "FAIL: condarc does not contain 'conda-forge'"
+            exit 1
+          fi
+          if ! echo "$CONTENT" | grep -q "channel_priority"; then
+            echo "FAIL: condarc does not contain 'channel_priority'"
+            exit 1
+          fi
+          echo "PASS: condarc file has expected content"
+      - name: Assert micromamba is functional
+        run: |
+          if ! command -v micromamba &>/dev/null; then
+            echo "FAIL: micromamba not found on PATH"
+            exit 1
+          fi
+          echo "PASS: micromamba is available"

@@ -1,6 +1,11 @@
 {
   "owner": "mamba-org",
   "repo": "setup-micromamba",
-  "version": "",
-  "url": "https://github.com/mamba-org/setup-micromamba"
+  "version": "v3.1.0",
+  "commit_sha": "ce51e99f4bb8a82ab7158c4dc59ef4634c59c4f9",
+  "url": "https://github.com/mamba-org/setup-micromamba",
+  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
+  "test_agent_version": "2",
+  "harden_agent_version": "2"
 }
