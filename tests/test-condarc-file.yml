@@ -1,0 +1,34 @@
+name: Test condarc-file input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create condarc file
+        run: |
+          mkdir -p "$HOME/.test-condarc-dir"
+          cat > "$HOME/.test-condarc-dir/condarc.yml" <<'EOF'
+          channels:
+            - conda-forge
+            - defaults
+          channel_priority: strict
+          EOF
+          echo "Created condarc file at $HOME/.test-condarc-dir/condarc.yml"
+      - id: action
+        uses: .
+        with:
+          condarc-file: "${{ env.HOME }}/.test-condarc-dir/condarc.yml"
+          init-shell: bash
+          generate-run-shell: "false"
+          post-cleanup: none
+      - name: Assert micromamba is installed
+        run: |
+          MAMBA_BIN="$HOME/micromamba-bin/micromamba"
+          if command -v micromamba &>/dev/null; then
+            MAMBA_BIN="$(command -v micromamba)"
+          fi
+          echo "micromamba binary: $MAMBA_BIN"
+          "$MAMBA_BIN" --version
+          echo "PASS: micromamba installed successfully with condarc-file"

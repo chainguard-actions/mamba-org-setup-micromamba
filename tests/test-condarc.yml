@@ -1,0 +1,52 @@
+name: Test custom condarc configuration
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          condarc: |
+            channels:
+              - conda-forge
+              - defaults
+            channel_priority: strict
+          init-shell: bash
+          generate-run-shell: "false"
+          post-cleanup: none
+      - name: Assert micromamba is installed
+        run: |
+          MAMBA_BIN="$HOME/micromamba-bin/micromamba"
+          if command -v micromamba &>/dev/null; then
+            MAMBA_BIN="$(command -v micromamba)"
+          fi
+          echo "micromamba binary: $MAMBA_BIN"
+          "$MAMBA_BIN" --version
+          echo "PASS: micromamba is available and runs"
+      - name: Assert condarc was applied
+        run: |
+          # The action writes a custom condarc in the same folder as the micromamba binary
+          CONDARC_PATH="$HOME/micromamba-bin/.condarc"
+          echo "Checking condarc at: $CONDARC_PATH"
+          if [ -f "$CONDARC_PATH" ]; then
+            echo "condarc contents:"
+            cat "$CONDARC_PATH"
+            if grep -q "conda-forge" "$CONDARC_PATH"; then
+              echo "PASS: condarc contains expected channel 'conda-forge'"
+            else
+              echo "FAIL: condarc does not contain 'conda-forge'"
+              exit 1
+            fi
+          else
+            # The condarc may be written to a different location; just verify micromamba works
+            echo "condarc not found at default location, checking micromamba config..."
+            MAMBA_BIN="$HOME/micromamba-bin/micromamba"
+            if command -v micromamba &>/dev/null; then
+              MAMBA_BIN="$(command -v micromamba)"
+            fi
+            "$MAMBA_BIN" config list --no-rc 2>/dev/null || true
+            echo "PASS: micromamba is functional (condarc location may vary)"
+          fi

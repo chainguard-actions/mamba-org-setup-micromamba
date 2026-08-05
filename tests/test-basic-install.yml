@@ -1,0 +1,31 @@
+name: Test basic micromamba install
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          init-shell: bash
+          generate-run-shell: "false"
+          post-cleanup: none
+      - name: Assert micromamba is installed
+        run: |
+          echo "Checking micromamba binary..."
+          if ! command -v micromamba &>/dev/null && [ ! -f "$HOME/micromamba-bin/micromamba" ]; then
+            echo "FAIL: micromamba binary not found on PATH or at default location"
+            exit 1
+          fi
+          echo "PASS: micromamba is available"
+      - name: Assert micromamba runs
+        run: |
+          MAMBA_BIN="$HOME/micromamba-bin/micromamba"
+          if command -v micromamba &>/dev/null; then
+            MAMBA_BIN="$(command -v micromamba)"
+          fi
+          echo "micromamba binary: $MAMBA_BIN"
+          "$MAMBA_BIN" --version
+          echo "PASS: micromamba --version succeeded"
