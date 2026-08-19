@@ -1,0 +1,24 @@
+name: Test micromamba-binary-path input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          micromamba-version: latest
+          micromamba-binary-path: /tmp/custom-bin/micromamba
+          init-shell: none
+          generate-run-shell: false
+          post-cleanup: none
+      - name: Assert micromamba binary exists at custom path
+        run: |
+          if [ ! -f "/tmp/custom-bin/micromamba" ]; then
+            echo "FAIL: micromamba binary not found at /tmp/custom-bin/micromamba"
+            exit 1
+          fi
+          echo "PASS: micromamba binary found at custom path"
+          /tmp/custom-bin/micromamba --version

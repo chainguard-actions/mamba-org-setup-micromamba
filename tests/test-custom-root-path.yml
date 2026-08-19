@@ -1,0 +1,40 @@
+name: Test custom micromamba root path
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      RUNNER_TEMP: /tmp/runner-temp
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Ensure RUNNER_TEMP exists
+        run: mkdir -p /tmp/runner-temp
+      - id: action
+        uses: .
+        with:
+          micromamba-root-path: /tmp/custom-mamba-root
+          init-shell: bash
+          generate-run-shell: "false"
+          post-cleanup: none
+      - name: Assert custom root path was created
+        run: |
+          ROOT_PATH="/tmp/custom-mamba-root"
+          echo "Checking custom root path: $ROOT_PATH"
+          if [ ! -d "$ROOT_PATH" ]; then
+            echo "FAIL: custom micromamba root path was not created at $ROOT_PATH"
+            exit 1
+          fi
+          echo "PASS: custom root path exists at $ROOT_PATH"
+      - name: Assert micromamba binary is available
+        run: |
+          MAMBA_BIN="${HOME}/micromamba-bin/micromamba"
+          if command -v micromamba &>/dev/null; then
+            MAMBA_BIN="micromamba"
+          fi
+          echo "Checking micromamba binary..."
+          if ! "$MAMBA_BIN" --version &>/dev/null; then
+            echo "FAIL: micromamba binary not functional"
+            exit 1
+          fi
+          echo "PASS: micromamba is functional"

@@ -1,0 +1,45 @@
+name: Test basic micromamba installation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      RUNNER_TEMP: /tmp/runner-temp
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Ensure RUNNER_TEMP exists
+        run: mkdir -p /tmp/runner-temp
+      - id: action
+        uses: .
+        with:
+          init-shell: bash
+          generate-run-shell: "false"
+          post-cleanup: none
+      - name: Assert micromamba is available
+        run: |
+          echo "Checking micromamba binary..."
+          MAMBA_BIN="${HOME}/micromamba-bin/micromamba"
+          if [ -f "$MAMBA_BIN" ]; then
+            echo "micromamba found at $MAMBA_BIN"
+          elif command -v micromamba &>/dev/null; then
+            echo "micromamba found on PATH: $(command -v micromamba)"
+            MAMBA_BIN="micromamba"
+          else
+            echo "FAIL: micromamba binary not found"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert micromamba runs
+        run: |
+          MAMBA_BIN="${HOME}/micromamba-bin/micromamba"
+          if command -v micromamba &>/dev/null; then
+            MAMBA_BIN="micromamba"
+          fi
+          VERSION=$("$MAMBA_BIN" --version 2>&1 || true)
+          echo "micromamba version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: micromamba --version returned empty"
+            exit 1
+          fi
+          echo "PASS"

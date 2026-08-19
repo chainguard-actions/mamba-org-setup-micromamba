@@ -1,0 +1,58 @@
+name: Test environment creation via create-args
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      RUNNER_TEMP: /tmp/runner-temp
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Ensure RUNNER_TEMP exists
+        run: mkdir -p /tmp/runner-temp
+      - id: action
+        uses: .
+        with:
+          environment-name: test-env
+          create-args: >-
+            python=3.11
+          init-shell: bash
+          generate-run-shell: "false"
+          post-cleanup: none
+      - name: Assert environment-path output is set
+        env:
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
+        run: |
+          echo "environment-path: $ENV_PATH"
+          if [ -z "$ENV_PATH" ]; then
+            echo "FAIL: environment-path output is empty"
+            exit 1
+          fi
+          echo "PASS: environment-path=$ENV_PATH"
+      - name: Assert environment directory exists
+        env:
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
+        run: |
+          echo "Checking environment directory: $ENV_PATH"
+          if [ ! -d "$ENV_PATH" ]; then
+            echo "FAIL: environment directory does not exist at $ENV_PATH"
+            exit 1
+          fi
+          echo "PASS: environment directory exists"
+      - name: Assert python is installed in environment
+        env:
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
+        run: |
+          PYTHON_BIN="$ENV_PATH/bin/python"
+          echo "Checking for python at: $PYTHON_BIN"
+          if [ ! -f "$PYTHON_BIN" ]; then
+            echo "FAIL: python binary not found in environment"
+            exit 1
+          fi
+          PYTHON_VERSION=$("$PYTHON_BIN" --version 2>&1)
+          echo "Python version: $PYTHON_VERSION"
+          if ! echo "$PYTHON_VERSION" | grep -q "3.11"; then
+            echo "FAIL: expected Python 3.11, got: $PYTHON_VERSION"
+            exit 1
+          fi
+          echo "PASS"

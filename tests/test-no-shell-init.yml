@@ -1,0 +1,47 @@
+name: Test micromamba installation with no shell init
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      RUNNER_TEMP: /tmp/runner-temp
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Ensure RUNNER_TEMP exists
+        run: mkdir -p /tmp/runner-temp
+      - id: action
+        uses: .
+        with:
+          init-shell: none
+          generate-run-shell: "false"
+          post-cleanup: none
+      - name: Assert micromamba binary exists
+        run: |
+          MAMBA_BIN="${HOME}/micromamba-bin/micromamba"
+          echo "Checking for micromamba at: $MAMBA_BIN"
+          if [ ! -f "$MAMBA_BIN" ]; then
+            if command -v micromamba &>/dev/null; then
+              echo "micromamba found on PATH: $(command -v micromamba)"
+            else
+              echo "FAIL: micromamba binary not found"
+              exit 1
+            fi
+          else
+            echo "micromamba found at: $MAMBA_BIN"
+          fi
+          echo "PASS"
+      - name: Assert bash profile is not modified by micromamba
+        run: |
+          # With init-shell: none, micromamba should NOT add itself to .bashrc or .bash_profile
+          BASHRC="$HOME/.bashrc"
+          BASH_PROFILE="$HOME/.bash_profile"
+          if [ -f "$BASHRC" ] && grep -q "mamba initialize" "$BASHRC"; then
+            echo "FAIL: micromamba init found in .bashrc despite init-shell: none"
+            exit 1
+          fi
+          if [ -f "$BASH_PROFILE" ] && grep -q "mamba initialize" "$BASH_PROFILE"; then
+            echo "FAIL: micromamba init found in .bash_profile despite init-shell: none"
+            exit 1
+          fi
+          echo "PASS: shell profiles not modified by micromamba"
