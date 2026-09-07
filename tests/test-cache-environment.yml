@@ -1,0 +1,28 @@
+name: Test cache-environment input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          micromamba-version: "2.0.5-0"
+          environment-name: test-env
+          create-args: python=3.11
+          init-shell: bash
+          cache-environment: false
+          cache-environment-key: test-cache-env-key
+          post-cleanup: environment
+      - name: Assert environment-path output is set
+        env:
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
+        run: |
+          echo "environment-path: $ENV_PATH"
+          if [ -z "$ENV_PATH" ]; then
+            echo "FAIL: environment-path output is empty"
+            exit 1
+          fi
+          echo "PASS: environment-path is set to $ENV_PATH"

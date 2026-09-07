@@ -1,0 +1,36 @@
+name: Test micromamba install with no shell initialization
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          init-shell: none
+          generate-run-shell: false
+      - name: Assert micromamba binary exists
+        run: |
+          echo "Checking micromamba binary..."
+          if ! command -v micromamba &>/dev/null; then
+            echo "FAIL: micromamba not found on PATH"
+            exit 1
+          fi
+          VERSION=$(micromamba --version)
+          echo "micromamba version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: micromamba --version returned empty"
+            exit 1
+          fi
+          echo "PASS: micromamba is installed"
+      - name: Assert bash profile is not modified by micromamba
+        run: |
+          # When init-shell is none, micromamba should not have added itself to .bashrc
+          BASHRC="$HOME/.bashrc"
+          if [ -f "$BASHRC" ] && grep -q "micromamba" "$BASHRC"; then
+            echo "FAIL: micromamba was found in .bashrc despite init-shell: none"
+            exit 1
+          fi
+          echo "PASS: .bashrc is not modified by micromamba"

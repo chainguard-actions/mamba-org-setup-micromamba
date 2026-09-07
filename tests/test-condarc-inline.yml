@@ -1,0 +1,42 @@
+name: Test micromamba install with inline condarc
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          init-shell: none
+          generate-run-shell: false
+          condarc: |
+            channels:
+              - conda-forge
+            channel_priority: strict
+      - name: Assert micromamba is installed
+        run: |
+          echo "Checking micromamba binary..."
+          if ! command -v micromamba &>/dev/null; then
+            echo "FAIL: micromamba not found on PATH"
+            exit 1
+          fi
+          VERSION=$(micromamba --version)
+          echo "micromamba version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: micromamba --version returned empty"
+            exit 1
+          fi
+          echo "PASS: micromamba is installed"
+      - name: Assert condarc is applied (conda-forge channel is configured)
+        run: |
+          echo "Checking micromamba config..."
+          CONFIG=$(micromamba config list 2>&1 || true)
+          echo "Config output: $CONFIG"
+          if echo "$CONFIG" | grep -q "conda-forge"; then
+            echo "PASS: conda-forge channel is configured"
+          else
+            echo "FAIL: conda-forge channel not found in micromamba config"
+            exit 1
+          fi

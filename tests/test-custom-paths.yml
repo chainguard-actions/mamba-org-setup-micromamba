@@ -1,0 +1,32 @@
+name: Test micromamba-binary-path and micromamba-root-path inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          micromamba-version: "2.0.5-0"
+          micromamba-root-path: ~/custom-micromamba-root
+          micromamba-binary-path: ~/custom-micromamba-bin/micromamba
+          init-shell: bash
+          post-cleanup: all
+      - name: Assert micromamba binary exists at custom path
+        run: |
+          BINARY_PATH="$HOME/custom-micromamba-bin/micromamba"
+          if [ ! -f "$BINARY_PATH" ]; then
+            echo "FAIL: micromamba binary not found at $BINARY_PATH"
+            exit 1
+          fi
+          echo "PASS: micromamba binary found at $BINARY_PATH"
+      - name: Assert micromamba root exists at custom path
+        run: |
+          ROOT_PATH="$HOME/custom-micromamba-root"
+          if [ ! -d "$ROOT_PATH" ]; then
+            echo "FAIL: micromamba root not found at $ROOT_PATH"
+            exit 1
+          fi
+          echo "PASS: micromamba root found at $ROOT_PATH"
