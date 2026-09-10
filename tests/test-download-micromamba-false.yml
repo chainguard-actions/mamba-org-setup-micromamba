@@ -1,0 +1,28 @@
+name: Test download-micromamba=false input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install micromamba manually
+        run: |
+          mkdir -p "$HOME/micromamba-bin"
+          curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj -C "$HOME/micromamba-bin" --strip-components=1 bin/micromamba
+          echo "$HOME/micromamba-bin" >> "$GITHUB_PATH"
+      - id: action
+        uses: .
+        with:
+          download-micromamba: "false"
+          micromamba-binary-path: ~/micromamba-bin/micromamba
+          init-shell: none
+          generate-run-shell: "false"
+          post-cleanup: shell-init
+      - name: Assert micromamba is available
+        run: |
+          if ! command -v micromamba &>/dev/null; then
+            echo "FAIL: micromamba not found on PATH"
+            exit 1
+          fi
+          echo "PASS: micromamba is available without downloading"

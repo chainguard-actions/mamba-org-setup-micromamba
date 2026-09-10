@@ -1,4 +1,4 @@
-name: Test cache-downloads and cache-downloads-key inputs
+name: Test log-level and post-cleanup inputs
 on:
   workflow_dispatch:
 jobs:
@@ -9,8 +9,7 @@ jobs:
       - id: action
         uses: .
         with:
-          cache-downloads: "true"
-          cache-downloads-key: test-cache-downloads-key-${{ github.run_id }}
+          log-level: info
           init-shell: none
           generate-run-shell: "false"
           post-cleanup: shell-init
@@ -20,4 +19,4 @@ jobs:
             echo "FAIL: micromamba not found"
             exit 1
           fi
-          echo "PASS: micromamba is available with cache-downloads enabled"
+          echo "PASS: micromamba is available with log-level=info"

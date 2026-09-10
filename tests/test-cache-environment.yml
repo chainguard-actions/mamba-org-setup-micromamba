@@ -1,4 +1,4 @@
-name: Test cache-environment input
+name: Test cache-environment and cache-environment-key inputs
 on:
   workflow_dispatch:
 jobs:
@@ -9,12 +9,12 @@ jobs:
       - id: action
         uses: .
         with:
-          micromamba-version: "2.0.5-0"
-          environment-name: test-env
+          environment-name: test-cache-env
           create-args: python=3.11
-          init-shell: bash
-          cache-environment: false
-          cache-environment-key: test-cache-env-key
+          cache-environment: "true"
+          cache-environment-key: test-cache-env-key-${{ github.run_id }}
+          init-shell: none
+          generate-run-shell: "false"
           post-cleanup: environment
       - name: Assert environment-path output is set
         env:

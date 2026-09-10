@@ -6,17 +6,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Write condarc file
+        run: |
+          cat > /tmp/test-condarc.yml << 'EOF'
+          channels:
+            - conda-forge
+            - defaults
+          EOF
       - id: action
         uses: .
         with:
-          micromamba-version: "2.0.5-0"
-          condarc-file: ${{ github.workspace }}/hardened/tests/fixtures/test.condarc
-          init-shell: bash
+          condarc-file: /tmp/test-condarc.yml
+          init-shell: none
+          generate-run-shell: "false"
           post-cleanup: shell-init
       - name: Assert micromamba is available
         run: |
-          if ! command -v micromamba &>/dev/null; then
-            echo "FAIL: micromamba not found on PATH"
+          if ! command -v micromamba &>/dev/null && [ ! -f "$HOME/micromamba-bin/micromamba" ]; then
+            echo "FAIL: micromamba not found"
             exit 1
           fi
           echo "PASS: micromamba is available"

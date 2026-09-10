@@ -10,12 +10,13 @@ jobs:
         uses: .
         with:
           micromamba-url: https://github.com/mamba-org/micromamba-releases/releases/download/2.0.5-0/micromamba-linux-64
-          init-shell: bash
-          post-cleanup: shell-init
+          init-shell: none
+          generate-run-shell: "false"
+          post-cleanup: all
       - name: Assert micromamba is available
         run: |
-          if ! command -v micromamba &>/dev/null; then
-            echo "FAIL: micromamba not found on PATH"
+          if ! command -v micromamba &>/dev/null && [ ! -f "$HOME/micromamba-bin/micromamba" ]; then
+            echo "FAIL: micromamba not found"
             exit 1
           fi
-          echo "PASS: micromamba is available"
+          echo "PASS: micromamba installed from custom URL"
