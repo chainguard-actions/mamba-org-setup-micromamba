@@ -9,16 +9,20 @@ jobs:
       - id: action
         uses: .
         with:
-          micromamba-url: "https://github.com/mamba-org/micromamba-releases/releases/download/2.0.0-0/micromamba-linux-64"
-          init-shell: bash
-          generate-run-shell: "false"
-          post-cleanup: none
-      - name: Assert micromamba is installed from custom URL
+          micromamba-url: https://github.com/mamba-org/micromamba-releases/releases/download/2.0.5-0/micromamba-linux-64
+          init-shell: none
+          post-cleanup: all
+      - name: Assert micromamba is available
         run: |
-          MAMBA_BIN="$HOME/micromamba-bin/micromamba"
-          if command -v micromamba &>/dev/null; then
-            MAMBA_BIN="$(command -v micromamba)"
+          which micromamba || (echo "FAIL: micromamba not found on PATH" && exit 1)
+          echo "PASS: micromamba is available"
+      - name: Assert micromamba version matches expected
+        run: |
+          VERSION=$(micromamba --version 2>&1 | head -1)
+          echo "micromamba version: $VERSION"
+          if echo "$VERSION" | grep -q "2.0.5"; then
+            echo "PASS: micromamba version matches expected (2.0.5)"
+          else
+            echo "FAIL: expected version 2.0.5 but got: $VERSION"
+            exit 1
           fi
-          echo "micromamba binary: $MAMBA_BIN"
-          "$MAMBA_BIN" --version
-          echo "PASS: micromamba installed successfully from custom URL"

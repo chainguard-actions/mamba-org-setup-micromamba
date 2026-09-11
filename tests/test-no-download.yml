@@ -1,0 +1,36 @@
+name: Test download-micromamba false
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Pre-install micromamba
+        run: |
+          mkdir -p /tmp/pre-installed-mamba
+          curl -fsSL https://github.com/mamba-org/micromamba-releases/releases/download/2.0.5-0/micromamba-linux-64 \
+            -o /tmp/pre-installed-mamba/micromamba
+          chmod +x /tmp/pre-installed-mamba/micromamba
+          echo "/tmp/pre-installed-mamba" >> "$GITHUB_PATH"
+      - id: action
+        uses: .
+        with:
+          download-micromamba: false
+          micromamba-binary-path: /tmp/pre-installed-mamba/micromamba
+          init-shell: none
+          post-cleanup: shell-init
+      - name: Assert micromamba is available
+        run: |
+          which micromamba || (echo "FAIL: micromamba not found on PATH" && exit 1)
+          echo "PASS: micromamba is available"
+      - name: Assert micromamba version is the pre-installed one
+        run: |
+          VERSION=$(micromamba --version 2>&1 | head -1)
+          echo "micromamba version: $VERSION"
+          if echo "$VERSION" | grep -q "2.0.5"; then
+            echo "PASS: pre-installed micromamba version is correct"
+          else
+            echo "FAIL: expected pre-installed version 2.0.5 but got: $VERSION"
+            exit 1
+          fi
