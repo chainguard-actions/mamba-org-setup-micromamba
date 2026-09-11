@@ -1,0 +1,31 @@
+name: Test micromamba specific version installation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          micromamba-version: '1.5.10-0'
+          init-shell: none
+          generate-run-shell: "false"
+          post-cleanup: none
+      - name: Assert micromamba version is correct
+        run: |
+          MAMBA_BIN="$HOME/micromamba-bin/micromamba"
+          echo "micromamba binary: $MAMBA_BIN"
+          if [ ! -f "$MAMBA_BIN" ]; then
+            echo "FAIL: micromamba binary not found at $MAMBA_BIN"
+            exit 1
+          fi
+          VERSION_OUTPUT="$("$MAMBA_BIN" --version 2>&1)"
+          echo "version output: $VERSION_OUTPUT"
+          if echo "$VERSION_OUTPUT" | grep -q "1.5.10"; then
+            echo "PASS: micromamba version 1.5.10 installed"
+          else
+            echo "FAIL: expected version 1.5.10, got: $VERSION_OUTPUT"
+            exit 1
+          fi

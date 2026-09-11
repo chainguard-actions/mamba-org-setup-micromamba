@@ -1,0 +1,58 @@
+name: Test micromamba with inline condarc configuration
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          condarc: |
+            channels:
+              - conda-forge
+              - defaults
+            channel_priority: strict
+          init-shell: none
+          generate-run-shell: "false"
+          post-cleanup: none
+      - name: Assert micromamba is installed
+        run: |
+          MAMBA_BIN="$HOME/micromamba-bin/micromamba"
+          echo "micromamba binary: $MAMBA_BIN"
+          if [ ! -f "$MAMBA_BIN" ]; then
+            echo "FAIL: micromamba binary not found at $MAMBA_BIN"
+            exit 1
+          fi
+          VERSION_OUTPUT="$("$MAMBA_BIN" --version 2>&1)"
+          echo "version output: $VERSION_OUTPUT"
+          if [ -z "$VERSION_OUTPUT" ]; then
+            echo "FAIL: micromamba --version produced no output"
+            exit 1
+          fi
+          echo "PASS: micromamba is available, version: $VERSION_OUTPUT"
+      - name: Assert condarc was written with correct content
+        run: |
+          # The action exports CONDARC env var pointing to the condarc file it wrote
+          echo "CONDARC env var: '$CONDARC'"
+          # Search for condarc in known locations
+          FOUND=0
+          for loc in "$CONDARC" "$RUNNER_TEMP/setup-micromamba/.condarc" "$HOME/.condarc" "$HOME/micromamba-bin/.condarc" "$HOME/micromamba/.condarc"; do
+            if [ -n "$loc" ] && [ -f "$loc" ]; then
+              echo "Found condarc at: $loc"
+              echo "condarc contents:"
+              cat "$loc"
+              if grep -q "conda-forge" "$loc"; then
+                echo "PASS: condarc contains expected channel 'conda-forge'"
+                FOUND=1
+                break
+              fi
+            fi
+          done
+          if [ "$FOUND" -eq 0 ]; then
+            echo "Searching for any .condarc files..."
+            find "$HOME" "$RUNNER_TEMP" -name "*.condarc" -o -name ".condarc" -o -name "condarc" 2>/dev/null | head -20 || true
+            echo "FAIL: could not find condarc with conda-forge channel"
+            exit 1
+          fi

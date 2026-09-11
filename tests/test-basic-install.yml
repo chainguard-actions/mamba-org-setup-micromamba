@@ -1,0 +1,45 @@
+name: Test basic micromamba installation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          init-shell: none
+          generate-run-shell: "false"
+          post-cleanup: none
+      - name: Assert micromamba binary exists
+        run: |
+          echo "Checking micromamba binary..."
+          MAMBA_BIN="$HOME/micromamba-bin/micromamba"
+          echo "Expected binary path: $MAMBA_BIN"
+          if [ ! -f "$MAMBA_BIN" ]; then
+            echo "FAIL: micromamba binary not found at $MAMBA_BIN"
+            exit 1
+          fi
+          echo "PASS: micromamba binary found at $MAMBA_BIN"
+      - name: Assert micromamba runs
+        run: |
+          MAMBA_BIN="$HOME/micromamba-bin/micromamba"
+          echo "micromamba binary: $MAMBA_BIN"
+          VERSION_OUTPUT="$("$MAMBA_BIN" --version 2>&1 || true)"
+          echo "version output: $VERSION_OUTPUT"
+          if [ -z "$VERSION_OUTPUT" ]; then
+            echo "FAIL: micromamba --version produced no output"
+            exit 1
+          fi
+          echo "PASS: micromamba version: $VERSION_OUTPUT"
+      - name: Assert environment-path output is empty (no env created)
+        env:
+          ENV_PATH: ${{ steps.setup.outputs.environment-path }}
+        run: |
+          echo "environment-path: '$ENV_PATH'"
+          if [ -n "$ENV_PATH" ]; then
+            echo "FAIL: expected empty environment-path when no environment was created"
+            exit 1
+          fi
+          echo "PASS: environment-path is empty as expected"

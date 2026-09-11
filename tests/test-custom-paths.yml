@@ -1,4 +1,4 @@
-name: Test custom paths and download options
+name: Test micromamba-binary-path and micromamba-root-path inputs
 on:
   workflow_dispatch:
 jobs:
@@ -9,25 +9,22 @@ jobs:
       - id: action
         uses: .
         with:
-          micromamba-version: 'latest'
-          download-micromamba: 'true'
-          micromamba-binary-path: '/tmp/custom-micromamba-bin/micromamba'
-          micromamba-root-path: '/tmp/custom-micromamba-root'
-          micromamba-url: ''
-          init-shell: 'none'
-          post-cleanup: 'all'
+          micromamba-binary-path: /tmp/custom-mamba-bin/micromamba
+          micromamba-root-path: /tmp/custom-mamba-root
+          init-shell: none
+          generate-run-shell: "false"
+          post-cleanup: shell-init
       - name: Assert micromamba binary exists at custom path
         run: |
-          if [ ! -f "/tmp/custom-micromamba-bin/micromamba" ]; then
-            echo "FAIL: micromamba binary not found at custom path /tmp/custom-micromamba-bin/micromamba"
+          if [ ! -f "/tmp/custom-mamba-bin/micromamba" ]; then
+            echo "FAIL: micromamba binary not found at custom path /tmp/custom-mamba-bin/micromamba"
             exit 1
           fi
           echo "PASS: micromamba binary found at custom path"
-          /tmp/custom-micromamba-bin/micromamba --version
-      - name: Assert micromamba root path exists
+      - name: Assert micromamba root exists at custom path
         run: |
-          if [ ! -d "/tmp/custom-micromamba-root" ]; then
-            echo "FAIL: micromamba root directory not found at /tmp/custom-micromamba-root"
+          if [ ! -d "/tmp/custom-mamba-root" ]; then
+            echo "FAIL: micromamba root not found at custom path /tmp/custom-mamba-root"
             exit 1
           fi
-          echo "PASS: micromamba root directory exists"
+          echo "PASS: micromamba root found at custom path"
