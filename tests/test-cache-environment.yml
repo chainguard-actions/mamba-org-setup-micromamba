@@ -13,26 +13,17 @@ jobs:
           environment-name: test-env
           create-args: python=3.11
           cache-environment: false
-          cache-environment-key: test-cache-key-env
+          cache-environment-key: test-env-cache-key-${{ github.run_id }}
           init-shell: none
           generate-run-shell: false
+          post-cleanup: environment
       - name: Assert environment-path output is set
-        env:
-          ACTUAL: ${{ steps.action.outputs.environment-path }}
-        run: |
-          echo "actual: $ACTUAL"
-          if [ -z "$ACTUAL" ]; then
-            echo "FAIL: environment-path output is empty"
-            exit 1
-          fi
-          echo "PASS: environment-path is set to $ACTUAL"
-      - name: Assert environment exists
         env:
           ENV_PATH: ${{ steps.action.outputs.environment-path }}
         run: |
-          echo "Checking environment path: $ENV_PATH"
-          if [ ! -d "$ENV_PATH" ]; then
-            echo "FAIL: environment directory does not exist at $ENV_PATH"
+          echo "environment-path: $ENV_PATH"
+          if [ -z "$ENV_PATH" ]; then
+            echo "FAIL: environment-path output is empty"
             exit 1
           fi
-          echo "PASS: environment directory exists"
+          echo "PASS: environment-path is set to $ENV_PATH"

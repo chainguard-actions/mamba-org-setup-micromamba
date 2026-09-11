@@ -1,4 +1,4 @@
-name: Test condarc-file input
+name: Test download-micromamba false input
 on:
   workflow_dispatch:
 jobs:
@@ -6,18 +6,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Create condarc file
+      - name: Pre-install micromamba binary
         run: |
-          cat > /tmp/test-condarc.yml << 'EOF'
-          channels:
-            - conda-forge
-            - defaults
-          EOF
+          mkdir -p ~/micromamba-bin
+          curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj -C ~/micromamba-bin --strip-components=1 bin/micromamba
+          chmod +x ~/micromamba-bin/micromamba
+          echo "$HOME/micromamba-bin" >> "$GITHUB_PATH"
       - id: action
         uses: .
         with:
-          micromamba-version: latest
-          condarc-file: /tmp/test-condarc.yml
+          download-micromamba: false
+          micromamba-binary-path: ~/micromamba-bin/micromamba
           init-shell: none
           generate-run-shell: false
           post-cleanup: all
