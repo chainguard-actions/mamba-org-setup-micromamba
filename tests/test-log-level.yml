@@ -9,15 +9,13 @@ jobs:
       - id: action
         uses: .
         with:
-          micromamba-version: latest
-          log-level: warning
+          log-level: debug
           init-shell: none
           generate-run-shell: false
-          post-cleanup: none
       - name: Assert micromamba is available
         run: |
-          if ! command -v micromamba &> /dev/null; then
+          if ! command -v micromamba &>/dev/null; then
             echo "FAIL: micromamba not found on PATH"
             exit 1
           fi
-          echo "PASS: micromamba is available with log-level=warning"
+          echo "PASS: micromamba is available with debug log level"

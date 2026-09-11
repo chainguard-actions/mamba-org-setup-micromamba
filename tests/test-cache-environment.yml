@@ -9,21 +9,23 @@ jobs:
       - id: action
         uses: .
         with:
-          micromamba-version: latest
-          environment-name: test-env
+          environment-name: test-cache-env
           create-args: python=3.11
+          cache-environment: false
+          cache-environment-key: test-env-cache-key-${{ github.run_id }}
           init-shell: none
           generate-run-shell: false
-          cache-environment: false
-          cache-environment-key: test-env-key
-          post-cleanup: environment
       - name: Assert environment-path output is set
         env:
-          ACTUAL: ${{ steps.action.outputs.environment-path }}
+          ENV_PATH: ${{ steps.action.outputs.environment-path }}
         run: |
-          echo "actual: $ACTUAL"
-          if [ -z "$ACTUAL" ]; then
+          echo "environment-path: $ENV_PATH"
+          if [ -z "$ENV_PATH" ]; then
             echo "FAIL: environment-path output is empty"
             exit 1
           fi
-          echo "PASS: environment-path is $ACTUAL"
+          if [ ! -d "$ENV_PATH" ]; then
+            echo "FAIL: environment directory does not exist at $ENV_PATH"
+            exit 1
+          fi
+          echo "PASS: environment created at $ENV_PATH"

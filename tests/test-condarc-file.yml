@@ -12,19 +12,17 @@ jobs:
           channels:
             - conda-forge
             - defaults
-          show_channel_urls: true
+          channel_priority: strict
           EOF
       - id: action
         uses: .
         with:
-          micromamba-version: latest
           condarc-file: /tmp/test-condarc.yml
           init-shell: none
           generate-run-shell: false
-          post-cleanup: none
       - name: Assert micromamba is available
         run: |
-          if ! command -v micromamba &> /dev/null; then
+          if ! command -v micromamba &>/dev/null; then
             echo "FAIL: micromamba not found on PATH"
             exit 1
           fi

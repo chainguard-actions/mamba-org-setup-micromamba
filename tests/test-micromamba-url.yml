@@ -9,16 +9,15 @@ jobs:
       - id: action
         uses: .
         with:
-          micromamba-url: https://github.com/mamba-org/micromamba-releases/releases/latest/download/micromamba-linux-64
+          micromamba-url: https://github.com/mamba-org/micromamba-releases/releases/download/2.0.5-0/micromamba-linux-64
           init-shell: none
           generate-run-shell: false
-          post-cleanup: none
       - name: Assert micromamba is available
         run: |
-          if ! command -v micromamba &> /dev/null; then
+          if ! command -v micromamba &>/dev/null; then
             echo "FAIL: micromamba not found on PATH"
             exit 1
           fi
-          VERSION=$(micromamba --version 2>&1 || true)
-          echo "micromamba version: $VERSION"
+          MAMBA_VERSION=$(micromamba --version 2>&1 || true)
+          echo "micromamba version: $MAMBA_VERSION"
           echo "PASS: micromamba installed from custom URL"

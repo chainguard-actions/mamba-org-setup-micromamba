@@ -9,15 +9,13 @@ jobs:
       - id: action
         uses: .
         with:
-          micromamba-version: latest
+          cache-downloads: false
+          cache-downloads-key: test-cache-key-${{ github.run_id }}
           init-shell: none
           generate-run-shell: false
-          cache-downloads: false
-          cache-downloads-key: test-downloads-key
-          post-cleanup: none
       - name: Assert micromamba is available
         run: |
-          if ! command -v micromamba &> /dev/null; then
+          if ! command -v micromamba &>/dev/null; then
             echo "FAIL: micromamba not found on PATH"
             exit 1
           fi

@@ -9,16 +9,14 @@ jobs:
       - id: action
         uses: .
         with:
-          micromamba-version: latest
-          micromamba-binary-path: /tmp/custom-bin/micromamba
+          micromamba-binary-path: /tmp/custom-mamba-bin/micromamba
           init-shell: none
           generate-run-shell: false
-          post-cleanup: none
       - name: Assert micromamba binary exists at custom path
         run: |
-          if [ ! -f "/tmp/custom-bin/micromamba" ]; then
-            echo "FAIL: micromamba binary not found at /tmp/custom-bin/micromamba"
+          if [ ! -f "/tmp/custom-mamba-bin/micromamba" ]; then
+            echo "FAIL: micromamba binary not found at custom path /tmp/custom-mamba-bin/micromamba"
             exit 1
           fi
           echo "PASS: micromamba binary found at custom path"
-          /tmp/custom-bin/micromamba --version
+          /tmp/custom-mamba-bin/micromamba --version
